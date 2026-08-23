@@ -1,130 +1,145 @@
 # CivicSage
 
-CivicSage is a civic intelligence dashboard designed to surface blind spots in public service operations by comparing operational KPIs, citizen feedback, and historical case data. The project is built to help identify mismatches between administrative resolution metrics and citizen-perceived outcomes, making it easier to flag issues such as premature case closure, rising repeat complaints, or weak evidence quality.
+## Exasol-Powered Civic Intelligence for Finding Hidden Public-Service Blind Spots
 
-## What the project does
+CivicSage is an AI-powered civic intelligence platform that analyzes large-scale public-service operational data to uncover problems that conventional dashboards can miss.
 
-The application has three core goals:
+Instead of looking only at whether cases were closed, CivicSage looks deeper by combining resolution performance, case aging, backlog volume, citizen signals, historical trends, and AI-assisted investigation to identify where official performance may not reflect the actual citizen experience.
 
-1. Monitor service delivery signals in one place.
-2. Detect contradictions between official performance metrics and citizen experience.
-3. Provide an investigation workflow to explain and review possible root causes.
+The core analytical workload is powered by Exasol, with risk scoring and large-scale aggregation executed directly in the database. The application layer uses FastAPI, while the interactive intelligence dashboard is built with Next.js and React.
 
-The dashboard includes:
+> CivicSage turns millions of operational records into explainable civic blind spots.
 
-- summary cards for key metrics
-- KPI trend analysis
-- blind spot detection
-- reality-check analysis
-- evidence chain review
-- impact-tracker comparison
-- investigation brief and human review workflow
+---
 
-## Project structure
+## The Problem
 
-### Backend
+Traditional public-service dashboards often answer:
 
-The backend lives under the `backend` folder and is built with FastAPI.
+> "How many cases were resolved?"
 
-It exposes API endpoints for:
+But that does not necessarily answer:
 
-- dashboard summary data
-- reality-check analysis
-- blind spots
-- investigations
-- evidence chain
-- impact tracking
+> "Were citizens actually helped?"
 
-The backend reads structured JSON datasets from the `backend/data` folder and serves them through typed API responses.
+A department may report a high resolution rate while simultaneously experiencing:
 
-### Frontend
+- Increasing long-term backlogs
+- Large numbers of aging cases
+- Increasing repeat complaints
+- Worsening follow-up behavior
+- Poor resolution quality
+- Regional performance disparities
 
-The frontend lives under the `frontend` folder and is built with Next.js and React.
+This creates a blind spot between administrative performance and citizen experience.
 
-It renders the dashboard and analysis screens for:
+CivicSage is designed to expose that gap.
 
-- home dashboard
-- reality check page
-- blind spots page
-- investigations page
-- evidence page
-- impact tracker page
+---
 
-## Data sources
+## What CivicSage Does
 
-The project uses synthetic demo data created for a civic operations prototype. The data is intentionally illustrative and not sourced from a real government system.
+CivicSage provides a unified intelligence layer for civic operations.
 
-These files are in `backend/data`:
+### 1. Operational Intelligence
 
-- `kpis.json` — summary metrics, KPI cards, trend data, and dashboard alert text
-- `citizen_signals.json` — repeat complaints, follow-up contacts, response-rate trends, and escalation patterns
-- `historical_cases.json` — district-level historical performance snapshots and case health indicators
-- `operations.json` — processing times, SLA compliance, reopen counts, and closure performance over time
+Monitor:
 
-This dataset was assembled to simulate the kind of contradictions that can appear in civic service systems:
+- Cases received
+- Cases disposed
+- Resolution rates
+- Pending cases
+- Aging cases
+- Processing performance
+- Historical trends
 
-- administrative metrics rising while citizen complaint signals worsen
-- higher case closure performance without better citizen satisfaction
-- increasing repeat-contact behavior despite improved SLA and processing efficiency
+### 2. Blind-Spot Detection
 
-## Why this project exists
+CivicSage calculates a composite risk score using multiple operational indicators.
 
-Many public-service systems track efficiency using official internal metrics, but they can miss whether citizens actually feel the issue was resolved. This project demonstrates how a civic dashboard can combine operational data and citizen feedback to reveal possible blind spots in the system.
+| Signal | Weight |
+|---|---:|
+| Long-term backlog | 35% |
+| Cases aging >1 year | 30% |
+| Resolution risk | 20% |
+| Pending-case volume | 15% |
 
-## How the app works
+This produces a ranked list of departments and regions requiring attention.
 
-1. The FastAPI backend loads JSON datasets from `backend/data`.
-2. The backend exposes structured API responses for each dashboard section.
-3. The React frontend calls those endpoints using a shared client helper.
-4. Each screen displays loading/error states and renders response data into cards, charts, and investigation briefs.
+### 3. AI Investigation
 
-## Local setup
+Once a potential blind spot is identified, the system can generate an investigation brief to help answer:
 
-### Backend
+- What is happening?
+- Why might it be happening?
+- Which signals support the finding?
+- What evidence should be reviewed?
+- What action should be considered?
 
-```bash
-cd backend
-python -m venv .venv
-. .venv/bin/activate   # Linux/macOS
-# or .venv\Scripts\Activate.ps1  # Windows PowerShell
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
+### 4. Reality Check
 
-### Frontend
+CivicSage compares official operational performance with citizen-facing signals to identify contradictions such as:
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+> Improving closure rate + worsening repeat complaints
 
-Then open:
+or:
 
-- frontend: http://localhost:3000
-- backend API: http://127.0.0.1:8000
+> Better SLA compliance + increasing unresolved follow-ups
 
-## API overview
+### 5. Evidence Chain
 
-The backend exposes these main routes:
+Investigators can trace an insight back to the underlying evidence and supporting signals.
 
-- `GET /health` — health check
-- `GET /api/dashboard` — dashboard summary payload
-- `POST /api/reality-check` — perform reality-check analysis on the service signals
-- `GET /api/blind-spots` — list detected blind spots
-- `GET /api/investigations` — fetch investigation data
-- `POST /api/investigations/{id}/review` — accept, modify, or reject an investigation
-- `GET /api/evidence` — display evidence chain and source metadata
-- `GET /api/impact-tracker` — show before/after impact metrics
+### 6. Impact Tracking
 
-## Notes on data quality
+The platform provides before-and-after comparisons to evaluate whether an intervention actually improves outcomes.
 
-The project is a prototype and uses synthetic data for demonstration purposes. The JSON files are intended to simulate realistic civic service signals, not to represent live government records or official public datasets.
+---
 
-## License
+## Why Exasol?
 
-This project is currently intended for educational and prototype/demo use.
+Exasol is not simply used as a storage layer in CivicSage.
 
-## Repository
+The analytical intelligence runs directly in Exasol.
 
-This project is designed to be pushed to a GitHub repository and used as a full-stack civic intelligence demo.
+Blind-spot detection is performed through SQL using:
+
+- Statistical normalization
+- Risk scoring
+- Logarithmic volume scaling
+- Weighted analytical calculations
+- Severity classification
+- Ranking
+
+Instead of transferring the entire analytical dataset into Python and performing the heavy workload there, CivicSage pushes the computation into Exasol.
+
+### Architecture
+
+```text
+                    CIVIC DATA
+                        |
+                        v
+               +------------------+
+               |      EXASOL      |
+               |                  |
+               | KPI Analytics    |
+               | Aggregations     |
+               | Risk Scoring     |
+               | Ranking          |
+               +--------+---------+
+                        |
+                        v
+               +------------------+
+               |     FastAPI      |
+               |                  |
+               | Business Logic   |
+               | AI Investigation |
+               | Evidence APIs    |
+               +--------+---------+
+                        |
+                        v
+               +------------------+
+               |  Next.js / React |
+               |                  |
+               |   CivicSage UI   |
+               +------------------+
