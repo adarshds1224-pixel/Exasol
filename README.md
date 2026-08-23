@@ -23,6 +23,7 @@ CivicSage is an AI-driven platform that analyzes large-scale public-service data
 - [Design Philosophy](#design-philosophy)
 - [Disclaimer](#disclaimer)
 - [Screenshots](#screenshots)
+- [Future Roadmap](#future-roadmap)
 - [Why CivicSage Matters](#why-civicsage-matters)
 
 ---
@@ -302,6 +303,42 @@ The team used Windows, with Exasol deployed on AWS.
 <img width="1901" height="896" alt="CivicSage dashboard - 5" src="https://github.com/user-attachments/assets/d59d50d0-7ba7-4e44-ab06-6c07eb97b994" />
 
 <img width="1877" height="897" alt="CivicSage dashboard - 6" src="https://github.com/user-attachments/assets/4d6b19e3-b330-43c8-bfc2-3230f4fcccb1" />
+
+## Future Roadmap
+
+Planned features to expand CivicSage into an enterprise public-administration platform:
+
+### 1. Interactive GIS Heat Map
+
+A spatial mapping interface (Leaflet.js + OpenStreetMap tiles) showing regional service bottlenecks, state-level complaint density, and spatial severity ratings — with drill-down from a national heat map to state-level detail and per-department breakdowns.
+
+<img width="1492" alt="GIS Heat Map overview with severity KPIs" src="assets/gis-heatmap-overview.png" />
+
+<img width="1492" alt="Regional heat map with pulsing severity markers across South Asia" src="assets/gis-heatmap-regional-view.png" />
+
+<img width="1492" alt="State-level detail view with hover tooltip and indicator summary" src="assets/gis-heatmap-state-detail.png" />
+
+<img width="1492" alt="Low-severity department list view" src="assets/gis-heatmap-low-severity-list.png" />
+
+### 2. Executive PDF Audit Exporter
+
+A formal, downloadable PDF audit brief from `/investigations`, complete with evidence gap analysis, officer sign-off fields, and recommended action steps.
+
+### 3. Interactive AI Assistant ("Ask CivicSage")
+
+A natural-language conversational drawer powered by Google Gemini, letting officials query grievances conversationally.
+
+### 4. Real-Time Threshold Notification System
+
+An in-app notification drawer plus webhook alerts (Email, Slack, Teams) triggered when a department's severity transitions to HIGH.
+
+### 5. Citizen Post-Closure Verification Portal
+
+An automated post-closure feedback loop simulating citizen SMS or web confirmation prompts to verify whether tickets were actually resolved.
+
+### 6. Predictive Backlog Forecasting Engine
+
+Time-series risk modeling to predict seasonal complaint surges and flag emerging blind spots 30, 60, and 90 days in advance.
 
 ## Why CivicSage Matters
 
