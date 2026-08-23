@@ -1,917 +1,274 @@
 # CivicSage
 
-## Exasol-Powered Civic Intelligence for Finding Hidden Public-Service Blind Spots
+**Exasol-powered civic intelligence for finding hidden public-service blind spots.**
 
-CivicSage is an AI-powered civic intelligence platform that analyzes large-scale public-service operational data to uncover problems that conventional dashboards can miss.
+CivicSage is an AI-driven platform that analyzes large-scale public-service data to surface problems that standard dashboards miss. It combines resolution performance, case aging, backlog volume, citizen signals, and AI-assisted investigation to reveal where official metrics may not reflect the real citizen experience.
 
-Instead of looking only at whether cases were closed, CivicSage looks deeper by combining resolution performance, case aging, backlog volume, citizen signals, historical trends, and AI-assisted investigation to identify where official performance may not reflect the actual citizen experience.
+> Turns millions of operational records into explainable civic blind spots.
 
-The core analytical workload is powered by Exasol, with risk scoring and large-scale aggregation executed directly in the database. The application layer uses FastAPI, while the interactive intelligence dashboard is built with Next.js and React.
+---
 
-> CivicSage turns millions of operational records into explainable civic blind spots.
+## Table of Contents
+
+- [The Problem](#the-problem)
+- [What CivicSage Does](#what-civicsage-does)
+- [Why Exasol](#why-exasol)
+- [Risk Engine](#risk-engine)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [API Reference](#api-reference)
+- [Getting Started](#getting-started)
+- [Demo Flow](#demo-flow)
+- [Design Philosophy](#design-philosophy)
+- [Disclaimer](#disclaimer)
 
 ---
 
 ## The Problem
 
-Traditional public-service dashboards often answer:
+Traditional public-service dashboards answer *"how many cases were resolved?"* — but not *"were citizens actually helped?"*
 
-> "How many cases were resolved?"
+A department can report a high resolution rate while still facing:
 
-But that does not necessarily answer:
-
-> "Were citizens actually helped?"
-
-A department may report a high resolution rate while simultaneously experiencing:
-
-- Increasing long-term backlogs
+- Growing long-term backlogs
 - Large numbers of aging cases
-- Increasing repeat complaints
-- Worsening follow-up behavior
+- Rising repeat complaints
 - Poor resolution quality
-- Regional performance disparities
+- Regional performance gaps
 
-This creates a blind spot between administrative performance and citizen experience.
-
-CivicSage is designed to expose that gap.
-
----
+This gap between **administrative performance** and **citizen experience** is CivicSage's core target.
 
 ## What CivicSage Does
 
-CivicSage provides a unified intelligence layer for civic operations.
+| Capability | Description |
+|---|---|
+| **Operational Intelligence** | Tracks cases received/disposed, resolution rates, pending and aging cases, and historical trends. |
+| **Blind-Spot Detection** | Calculates a composite risk score across departments/regions to rank where attention is needed most. |
+| **AI Investigation** | Generates a brief on what's happening, why, which signals support it, and what to review next. |
+| **Reality Check** | Flags contradictions, e.g. improving closure rates alongside rising repeat complaints. |
+| **Evidence Chain** | Traces any insight back to its underlying data. |
+| **Impact Tracking** | Compares before/after outcomes to see if an intervention actually worked. |
 
-### 1. Operational Intelligence
+### Demo Scale
 
-Monitor:
+- **5.32M+** cases analyzed
+- **124** blind spots detected
 
-- Cases received
-- Cases disposed
-- Resolution rates
-- Pending cases
-- Aging cases
-- Processing performance
-- Historical trends
+**Example blind spot — Legal Affairs:**
 
-### 2. Blind-Spot Detection
+| Metric | Value |
+|---|---|
+| Resolution Rate | 76.63% |
+| Pending > 1 Year | 61.13% |
+| Pending > 3 Years | 67 |
+| Total Pending | 2,822 |
+| Risk Score | 69.97 |
+| Severity | MEDIUM |
 
-CivicSage calculates a composite risk score using multiple operational indicators.
+## Why Exasol
 
-| Signal | Weight |
-|---|---:|
-| Long-term backlog | 35% |
-| Cases aging >1 year | 30% |
-| Resolution risk | 20% |
-| Pending-case volume | 15% |
+Exasol isn't just storage — it's the analytical engine. Instead of pulling the full dataset into Python for processing, CivicSage pushes the heavy computation into Exasol via SQL: normalization, weighted risk scoring, logarithmic volume scaling, severity classification, and ranking. Only the small, final result set is passed to the application layer.
 
-This produces a ranked list of departments and regions requiring attention.
+```
+Large Dataset → Exasol (aggregate, normalize, score, rank) → Small Result → FastAPI
+```
 
-### 3. AI Investigation
+## Risk Engine
 
-Once a potential blind spot is identified, the system can generate an investigation brief to help answer:
+Risk scores are calculated per department/region using a weighted model:
 
-- What is happening?
-- Why might it be happening?
-- Which signals support the finding?
-- What evidence should be reviewed?
-- What action should be considered?
+```
+Risk Score = 0.35 × Backlog Risk
+           + 0.30 × Aging Risk
+           + 0.20 × Resolution Risk
+           + 0.15 × Volume Score
+```
 
-### 4. Reality Check
+| Signal | Weight | What it Measures |
+|---|---:|---|
+| Long-term backlog | 35% | Cases pending more than 3 years |
+| Aging | 30% | Cases unresolved for more than 1 year |
+| Resolution | 20% | Lower resolution rate → higher risk |
+| Volume | 15% | Log-scaled case volume, so large departments aren't unfairly penalized |
 
-CivicSage compares official operational performance with citizen-facing signals to identify contradictions such as:
+**Severity thresholds:**
 
-> Improving closure rate + worsening repeat complaints
+| Risk Score | Severity |
+|---|---|
+| ≥ 70 | HIGH |
+| 40 – 69.99 | MEDIUM |
+| < 40 | LOW |
 
-or:
+**Pipeline:**
 
-> Better SLA compliance + increasing unresolved follow-ups
+```
+Raw KPI Data → Dataset Statistics → Normalize Signals → Weighted Score → Severity → Ranked Blind Spots
+```
 
-### 5. Evidence Chain
+## Architecture
 
-Investigators can trace an insight back to the underlying evidence and supporting signals.
+```
+Civic Data
+    │
+    ▼
+┌─────────────────────┐
+│       Exasol         │  KPI analytics, aggregation, risk scoring, ranking
+└──────────┬────────────┘
+           ▼
+┌─────────────────────┐
+│       FastAPI         │  Business logic, AI investigation, evidence APIs
+└──────────┬────────────┘
+           ▼
+┌─────────────────────┐
+│    Next.js / React    │  CivicSage dashboard UI
+└─────────────────────┘
+```
 
-### 6. Impact Tracking
+Deployment runs on **AWS**, with Exasol and the FastAPI backend as separate services both feeding the frontend.
 
-The platform provides before-and-after comparisons to evaluate whether an intervention actually improves outcomes.
+## Tech Stack
 
----
+- **Frontend:** Next.js, React, TypeScript/JavaScript
+- **Backend:** Python, FastAPI, Pandas
+- **Database & Analytics:** Exasol, SQL (aggregation, scoring, ranking, normalization)
+- **AI:** Investigation briefs, evidence interpretation
+- **Infrastructure:** AWS, GitHub
 
-## Why Exasol?
+## Project Structure
 
-Exasol is not simply used as a storage layer in CivicSage.
-
-The analytical intelligence runs directly in Exasol.
-
-Blind-spot detection is performed through SQL using:
-
-- Statistical normalization
-- Risk scoring
-- Logarithmic volume scaling
-- Weighted analytical calculations
-- Severity classification
-- Ranking
-
-Instead of transferring the entire analytical dataset into Python and performing the heavy workload there, CivicSage pushes the computation into Exasol.
-
-### Architecture
-
-```text
-                    CIVIC DATA
-                        |
-                        v
-               +------------------+
-               |      EXASOL      |
-               |                  |
-               | KPI Analytics    |
-               | Aggregations     |
-               | Risk Scoring     |
-               | Ranking          |
-               +--------+---------+
-                        |
-                        v
-               +------------------+
-               |     FastAPI      |
-               |                  |
-               | Business Logic   |
-               | AI Investigation |
-               | Evidence APIs    |
-               +--------+---------+
-                        |
-                        v
-               +------------------+
-               |  Next.js / React |
-               |                  |
-               |   CivicSage UI   |
-               +------------------+
-
-Current Demo Scale
-
-The current Exasol-backed demonstration analyzes more than:
-
-5.32 Million Cases
-
-The current analytical pipeline produces:
-
-124 Detected Blind Spots
-
-The dashboard provides:
-
-Overall operational metrics
-Ranked blind spots
-Risk scores
-Severity classification
-Yearly operational trends
-Monthly prediction vs actual analysis
-Department-level indicators
-Regional performance indicators
-AI investigation workflows
-
-Example blind-spot result:
-
-Legal Affairs
-
-Resolution Rate       76.63%
-Pending >3 Years      67
-Pending >1 Year       61.13%
-Total Pending         2,822
-Risk Score            69.97
-Severity              MEDIUM
-Blind-Spot Risk Engine
-
-The analytical pipeline runs directly inside Exasol.
-
-The system first calculates dataset-level statistics and then normalizes multiple risk indicators.
-
-Raw KPI Data
-     |
-     v
-Calculate Dataset Statistics
-     |
-     +-- Resolution range
-     +-- Aging range
-     +-- Backlog range
-     +-- Volume range
-     |
-     v
-Normalize Risk Signals
-     |
-     v
-Weighted Risk Score
-     |
-     v
-Severity Classification
-     |
-     v
-Ranked Blind Spots
-Risk Calculation
-
-The current scoring model uses:
-
-Risk Score =
-    0.35 x Backlog Risk
-  + 0.30 x Aging Risk
-  + 0.20 x Resolution Risk
-  + 0.15 x Volume Score
-Risk Components
-Long-Term Backlog Risk
-
-Measures the relative level of cases pending for more than three years.
-
-Aging Risk
-
-Measures the percentage of cases that have remained unresolved for more than one year.
-
-Resolution Risk
-
-Lower resolution rates produce higher risk.
-
-Volume Score
-
-Uses logarithmic scaling so that extremely large departments do not automatically dominate the ranking simply because of their size.
-
-Severity Classification
-Risk Score >= 70       HIGH
-Risk Score 40-69.99    MEDIUM
-Risk Score < 40        LOW
-
-This approach allows CivicSage to identify potential operational blind spots using multiple signals rather than relying on a single KPI.
-
-System Architecture
-                         +------------------+
-                         |   CivicSage UI   |
-                         | Next.js + React  |
-                         +--------+---------+
-                                  |
-                                  |
-                                  v
-                         +------------------+
-                         |     FastAPI      |
-                         |    REST APIs     |
-                         +--------+---------+
-                                  |
-                +-----------------+-----------------+
-                |                 |                 |
-                v                 v                 v
-         +-------------+   +-------------+   +-------------+
-         |   Exasol    |   | AI Services |   | Civic Data  |
-         |             |   |             |   |             |
-         | KPI Engine  |   | Investigator|   | Evidence    |
-         | Risk Engine |   | Insights    |   | Signals     |
-         +-------------+   +-------------+   +-------------+
-Technology Stack
-Frontend
-Next.js
-React
-JavaScript / TypeScript
-Dashboard visualizations
-Backend
-Python
-FastAPI
-Pandas
-REST APIs
-Database and Analytics
-Exasol
-SQL
-Analytical aggregation
-Risk scoring
-Ranking
-Data normalization
-AI
-AI-assisted investigation
-Evidence interpretation
-Investigation brief generation
-Cloud and Infrastructure
-AWS
-Exasol deployed on AWS
-GitHub
-Project Structure
+```
 Exasol/
-|
-+-- backend/
-|   |
-|   +-- app/
-|   |   |
-|   |   +-- routers/
-|   |   |   +-- dashboard.py
-|   |   |   +-- blind_spots.py
-|   |   |   +-- investigations.py
-|   |   |   +-- evidence.py
-|   |   |   +-- impact_tracker.py
-|   |   |
-|   |   +-- services/
-|   |       +-- exasol_service.py
-|   |       +-- blind_spot_detector.py
-|   |       +-- gemini_investigator.py
-|   |       +-- contradiction_service.py
-|   |       +-- reality_check_service.py
-|   |
-|   +-- data/
-|   |
-|   +-- data-pipeline/
-|   |   +-- clean/
-|   |
-|   +-- load_exasol_data.py
-|   +-- test_exasol.py
-|   +-- requirements.txt
-|   +-- .env.example
-|
-+-- frontend/
-|   |
-|   +-- app/
-|   +-- components/
-|   +-- lib/
-|   +-- public/
-|   +-- package.json
-|
-+-- README.md
-+-- push_repo.py
-API
+├── backend/
+│   ├── app/
+│   │   ├── routers/          # dashboard, blind_spots, investigations, evidence, impact_tracker
+│   │   └── services/         # exasol_service, blind_spot_detector, gemini_investigator, reality_check_service
+│   ├── data/
+│   ├── data-pipeline/clean/
+│   ├── load_exasol_data.py
+│   ├── test_exasol.py
+│   └── requirements.txt
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   └── package.json
+└── README.md
+```
 
-The FastAPI backend exposes the following major endpoints:
+The core analytical table is **`CIVICSAGE.DEPT_KPIS`**, queried directly by the blind-spot detection engine.
 
-Method	Endpoint	Purpose
-GET	/health	Backend health check
-GET	/api/dashboard	Dashboard analytics
-GET	/api/blind-spots	Ranked blind spots
-POST	/api/reality-check	Reality-check analysis
-GET	/api/investigations	Investigation data
-POST	/api/investigations/{id}/review	Human review
-GET	/api/evidence	Evidence chain
-GET	/api/impact-tracker	Impact comparison
-Data Pipeline
+## API Reference
 
-CivicSage processes structured civic-service data representing:
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/health` | Backend health check |
+| GET | `/api/dashboard` | Dashboard analytics |
+| GET | `/api/blind-spots` | Ranked blind spots |
+| POST | `/api/reality-check` | Reality-check analysis |
+| GET | `/api/investigations` | Investigation data |
+| POST | `/api/investigations/{id}/review` | Human review |
+| GET | `/api/evidence` | Evidence chain |
+| GET | `/api/impact-tracker` | Impact comparison |
 
-Operational KPIs
-Citizen signals
-Historical cases
-Processing performance
-Case aging
-Resolution metrics
-Regional performance
-Prediction and actual trends
+## Getting Started
 
-The data pipeline prepares analytical datasets before loading relevant KPI data into Exasol.
+### Backend
 
-Source Data
-     |
-     v
-Cleaning & Transformation
-     |
-     v
-Analytical KPI Tables
-     |
-     v
-Exasol
-     |
-     v
-SQL Risk Engine
-     |
-     v
-FastAPI
-     |
-     v
-CivicSage Dashboard
-Exasol Data Integration
-
-The project contains a dedicated Exasol service:
-
-backend/app/services/exasol_service.py
-
-The service manages the connection between FastAPI and the Exasol database.
-
-The blind-spot detector queries Exasol directly:
-
-FastAPI
-   |
-   v
-Exasol Service
-   |
-   v
-CIVICSAGE.DEPT_KPIS
-   |
-   v
-Analytical SQL
-   |
-   v
-Risk Scores
-   |
-   v
-Blind Spots
-
-The primary analytical table is:
-
-CIVICSAGE.DEPT_KPIS
-
-This table contains department-level KPI data used by the blind-spot detection engine.
-
-AWS + Exasol
-
-CivicSage uses an Exasol deployment running on AWS for its analytical workload.
-
-The architecture separates the application layer from the analytical database:
-
-                    AWS
-                     |
-        +------------+------------+
-        |                         |
-        v                         v
-   FastAPI Backend          Exasol Database
-        |                         |
-        |                         |
-        +-----------+-------------+
-                    |
-                    v
-              CivicSage UI
-
-The backend connects to Exasol through environment-based configuration.
-
-Database credentials are intentionally excluded from the repository.
-
-Local Development
-Backend
-
-Navigate to the backend:
-
+```bash
 cd backend
-
-Create a virtual environment:
-
 python -m venv .venv
-Windows PowerShell
+
+# Windows PowerShell
 .venv\Scripts\Activate.ps1
-Linux/macOS
+# Linux/macOS
 source .venv/bin/activate
 
-Install dependencies:
-
 pip install -r requirements.txt
-
-Start the FastAPI server:
-
 uvicorn app.main:app --reload
+```
 
-The backend will be available at:
+Backend runs at `http://127.0.0.1:8000`
 
-http://127.0.0.1:8000
-Frontend
+### Frontend
 
-Navigate to the frontend:
-
+```bash
 cd frontend
-
-Install dependencies:
-
 npm install
-
-Start the Next.js development server:
-
 npm run dev -- --webpack
+```
 
-The frontend will be available at:
+Frontend runs at `http://localhost:3000`
 
-http://localhost:3000
-Environment Variables
+### Environment Variables
 
-Create a local environment file:
+Create `backend/.env` (use `backend/.env.example` as a template):
 
-backend/.env
-
-Configure the required Exasol and AI credentials.
-
-Example configuration:
-
+```bash
 EXASOL_DSN=your_exasol_dsn
 EXASOL_USER=your_exasol_username
 EXASOL_PASSWORD=your_exasol_password
 GEMINI_API_KEY=your_gemini_api_key
+```
 
-Use the following file as the template:
+> **Security:** Never commit API keys, database passwords, AWS credentials, or other secrets. `.env` is git-ignored — only `.env.example` should be committed.
 
-backend/.env.example
-Security
+### Testing the Exasol Connection
 
-Never commit:
-
-API keys
-Database passwords
-AWS credentials
-Exasol credentials
-Other private secrets
-
-The repository uses .gitignore to prevent local .env files from being committed.
-
-Testing the Exasol Connection
-
-From the backend directory:
-
+```bash
 python test_exasol.py
+```
 
-A successful connection should return a valid Exasol query result.
+Or a quick one-liner:
 
-A simple connection test can also be performed with:
-
+```bash
 python -c "from app.services.exasol_service import get_exasol_connection; c=get_exasol_connection(); print(c.execute('SELECT 1').fetchone()); c.close()"
+```
 
-Expected result:
+Expected output: `(1,)`
 
-(1,)
-Testing the Dashboard API
+### Testing the Dashboard API
 
-Start the backend:
+```bash
+# with the backend running
+curl http://127.0.0.1:8000/api/dashboard
+```
 
-uvicorn app.main:app --reload
+Example response:
 
-Then run:
-
-Windows PowerShell
-curl.exe http://127.0.0.1:8000/api/dashboard
-
-The API returns structured dashboard data including:
-
-Active blind spots
-High-severity blind spots
-Cases analyzed
-Top blind spots
-Yearly trends
-Monthly prediction vs actual data
-
-Example:
-
+```json
 {
   "active_blind_spots": 124,
   "high_severity_count": 0,
   "cases_analyzed": 5320297
 }
-Frontend Dashboard
+```
 
-Once both servers are running:
+## Demo Flow
 
-Backend:
-http://127.0.0.1:8000
+1. **Dashboard** — overview of cases analyzed, blind spots, high-risk areas, and trends.
+2. **Blind Spots** — see departments/regions ranked by risk; select one to explore.
+3. **Risk Score Breakdown** — show it's multi-signal: Backlog (35%), Aging (30%), Resolution (20%), Volume (15%).
+4. **Exasol Highlight** — explain that the heavy computation runs as SQL inside Exasol, not in the app layer.
+5. **Reality Check** — compare official metrics against citizen-facing signals for contradictions.
+6. **AI Investigation** — generate a brief: anomaly, evidence, causes, recommended review.
+7. **Evidence Chain** — trace the investigation back to supporting data.
+8. **Impact Tracker** — show before/after outcomes of an intervention.
 
-Frontend:
-http://localhost:3000
+## Design Philosophy
 
-Open:
+1. **Detect, don't just display** — surface risky patterns, not just charts.
+2. **Multi-signal analysis** — no single KPI drives a flag.
+3. **Explainable intelligence** — every blind spot has interpretable indicators behind it.
+4. **Human-in-the-loop** — AI assists investigators; it doesn't replace judgment.
+5. **Evidence before action** — findings must be backed by observable data.
 
-http://localhost:3000
+## Disclaimer
 
-The frontend communicates with the FastAPI backend to populate the CivicSage dashboard.
+CivicSage is an **educational and hackathon prototype**. Datasets are synthetic and do not represent real government records, live systems, or actual citizen complaints. Risk scores are analytical indicators only, not definitive judgments about any department, region, or individual. AI-generated findings are meant to support human review and should always be validated against real evidence.
 
-Demo Flow
+---
 
-The recommended demo flow is:
+**Built with:** Exasol · AWS · FastAPI · Next.js · React · Python · SQL · AI
 
-1. Start With the Dashboard
-
-Show the overall operational picture.
-
-Highlight:
-
-Number of cases analyzed
-Number of blind spots
-High-risk areas
-Historical trends
-Prediction vs actual performance
-2. Open Blind Spots
-
-Show how CivicSage ranks departments and regions based on multiple operational signals.
-
-Select a significant blind spot.
-
-3. Explain the Risk Score
-
-Show that the score is not based on a single metric.
-
-Explain:
-
-Backlog Risk       -> 35%
-Aging Risk         -> 30%
-Resolution Risk    -> 20%
-Volume Score       -> 15%
-4. Highlight Exasol
-
-Explain that the heavy analytical computation is executed directly inside Exasol using SQL.
-
-This is the key database component of the architecture.
-
-5. Reality Check
-
-Compare administrative performance against citizen-facing signals.
-
-Look for contradictions such as:
-
-Resolution Rate      Improving
-Citizen Complaints   Increasing
-Repeat Contacts      Increasing
-
-This is where a conventional KPI dashboard may miss the problem.
-
-6. AI Investigation
-
-Open an identified blind spot and generate an investigation brief.
-
-The AI layer helps summarize:
-
-The observed anomaly
-Supporting evidence
-Potential causes
-Recommended areas for human review
-7. Evidence Chain
-
-Show how the investigation can be traced back to the supporting signals.
-
-8. Impact Tracker
-
-Demonstrate how changes can be evaluated over time.
-
-Key Insight
-
-The main idea behind CivicSage is simple:
-
-A high administrative resolution rate does not automatically mean a high-quality citizen outcome.
-
-CivicSage therefore looks for contradictions between different layers of the system.
-
-              OFFICIAL METRICS
-                    |
-                    v
-             "Cases resolved"
-                    |
-                    |
-                    v
-              CIVICSAGE
-                    |
-       +------------+------------+
-       |            |            |
-       v            v            v
-   Backlog       Aging       Resolution
-       |            |            |
-       +------------+------------+
-                    |
-                    v
-              Citizen Signals
-                    |
-                    v
-             Reality Check
-                    |
-                    v
-             Blind Spot
-                    |
-                    v
-            AI Investigation
-                    |
-                    v
-                 Evidence
-                    |
-                    v
-                 Action
-                    |
-                    v
-                 Impact
-Why CivicSage?
-
-Most dashboards tell decision-makers:
-
-"What happened?"
-
-CivicSage tries to answer:
-
-"Where might the numbers be hiding a problem?"
-
-The platform combines:
-
-Scale
-
-Large-scale analytical processing through Exasol.
-
-Detection
-
-Multi-signal blind-spot identification.
-
-Explanation
-
-AI-assisted investigation.
-
-Evidence
-
-Traceable supporting signals.
-
-Action
-
-Human review and impact tracking.
-
-This creates a complete intelligence pipeline:
-
-DATA
-  |
-  v
-SIGNAL
-  |
-  v
-BLIND SPOT
-  |
-  v
-INVESTIGATION
-  |
-  v
-EVIDENCE
-  |
-  v
-ACTION
-  |
-  v
-IMPACT
-Design Philosophy
-
-CivicSage is designed around five principles:
-
-1. Detect, Don't Just Display
-
-The system should identify unusual or risky patterns instead of simply displaying charts.
-
-2. Multi-Signal Analysis
-
-A single KPI can be misleading.
-
-CivicSage combines multiple signals before flagging a potential blind spot.
-
-3. Explainable Intelligence
-
-Every identified blind spot should have understandable indicators behind it.
-
-4. Human-in-the-Loop
-
-AI-generated findings are intended to assist investigators, not replace human judgment.
-
-5. Evidence Before Action
-
-Potential problems should be supported by observable data before decisions are made.
-
-Performance Philosophy
-
-CivicSage uses Exasol for analytical workloads because civic operational datasets can grow to millions of records.
-
-Instead of performing all aggregation and scoring in the application layer:
-
-Large Dataset
-     |
-     v
-Python
-     |
-     v
-Memory
-     |
-     v
-Calculations
-
-CivicSage pushes analytical computation into Exasol:
-
-Large Dataset
-     |
-     v
-EXASOL
-     |
-     +-- Aggregation
-     +-- Normalization
-     +-- Scoring
-     +-- Ranking
-     |
-     v
-Small Analytical Result
-     |
-     v
-FastAPI
-
-This keeps the application layer focused on serving insights rather than performing the entire analytical workload.
-
-Data Quality and Prototype Disclaimer
-
-CivicSage is an educational and hackathon prototype.
-
-The datasets used in the demonstration are synthetic and/or prepared specifically for the prototype. They do not represent official government records, live government systems, real citizen complaints, or official public-service performance.
-
-Risk scores are analytical indicators and should not be interpreted as definitive judgments about a department, region, organization, or public servant.
-
-AI-generated investigation results are intended to assist human review and should always be validated against appropriate evidence.
-
-Future Improvements
-
-Potential future development includes:
-
-Live civic data ingestion
-More granular geographic analysis
-Streaming operational data
-Automated anomaly detection
-Advanced citizen sentiment analysis
-More sophisticated causal analysis
-Predictive backlog forecasting
-Automated intervention recommendations
-Real-time Exasol analytics
-Role-based investigator workflows
-Audit trails for investigation decisions
-Expanded AI evidence reasoning
-Project Highlights
-+--------------------------------------+
-|            CIVICSAGE                 |
-+--------------------------------------+
-|                                      |
-|  5.32M+ Cases Analyzed               |
-|                                      |
-|  124 Blind Spots Detected            |
-|                                      |
-|  Exasol-Powered Analytics             |
-|                                      |
-|  AI-Assisted Investigation            |
-|                                      |
-|  Reality Check Engine                 |
-|                                      |
-|  Evidence Chain                       |
-|                                      |
-|  Impact Tracking                      |
-|                                      |
-+--------------------------------------+
-Repository Structure
-CivicSage
-|
-+-- backend
-|   |
-|   +-- FastAPI application
-|   +-- Exasol integration
-|   +-- SQL analytics
-|   +-- Blind-spot detection
-|   +-- AI investigation
-|   +-- Evidence services
-|   +-- Data pipeline
-|
-+-- frontend
-|   |
-|   +-- Next.js application
-|   +-- React components
-|   +-- Dashboard
-|   +-- Investigation UI
-|   +-- Analytics visualizations
-|
-+-- README.md
-Security
-
-The project follows basic credential protection practices.
-
-Sensitive values are stored locally in environment variables and are not intended to be committed to GitHub.
-
-Before pushing changes, verify:
-
-.env
-
-is ignored by Git.
-
-Only safe configuration templates such as:
-
-.env.example
-
-should be committed.
-
-License
-
-This project is currently intended for educational, research, hackathon, and prototype/demo purposes.
-
-Exasol AI Build Challenge 2026
-
-CivicSage was built to demonstrate how a high-performance analytical database can become the foundation of an AI-powered decision-support system.
-
-The key idea is not simply:
-
-"Store civic data in Exasol."
-
-It is:
-
-"Use Exasol to transform large-scale civic data into actionable intelligence."
-
-CivicSage connects:
-
-Large-Scale Data
-       |
-       v
-     Exasol
-       |
-       v
-Analytical Intelligence
-       |
-       v
-Blind-Spot Detection
-       |
-       v
-AI Investigation
-       |
-       v
-Evidence
-       |
-       v
-Human Decision
-       |
-       v
-Impact Tracking
-Built With
-
-Exasol | AWS | FastAPI | Next.js | React | Python | SQL | AI
+*Submitted for the Exasol AI Build Challenge 2026.*
