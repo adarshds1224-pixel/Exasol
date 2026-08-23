@@ -312,13 +312,14 @@ Planned features to expand CivicSage into an enterprise public-administration pl
 
 A spatial mapping interface (Leaflet.js + OpenStreetMap tiles) showing regional service bottlenecks, state-level complaint density, and spatial severity ratings — with drill-down from a national heat map to state-level detail and per-department breakdowns.
 
-<img width="1492" alt="GIS Heat Map overview with severity KPIs" src="assets/gis-heatmap-overview.png" />
+<img width="1492" height="907" alt="image" src="https://github.com/user-attachments/assets/e6b6ca1b-b569-43af-8749-43698805477d" />
 
-<img width="1492" alt="Regional heat map with pulsing severity markers across South Asia" src="assets/gis-heatmap-regional-view.png" />
+<img width="1488" height="902" alt="image" src="https://github.com/user-attachments/assets/89ce1045-9671-4481-832b-483c92605c08" />
 
-<img width="1492" alt="State-level detail view with hover tooltip and indicator summary" src="assets/gis-heatmap-state-detail.png" />
+<img width="1492" height="910" alt="image" src="https://github.com/user-attachments/assets/b8b177f7-fa70-49d6-822e-ee4a51a51bf3" />
 
-<img width="1492" alt="Low-severity department list view" src="assets/gis-heatmap-low-severity-list.png" />
+<img width="1485" height="897" alt="image" src="https://github.com/user-attachments/assets/9e37bc23-2a5d-42f5-be93-b176dbf1460e" />
+
 
 ### 2. Executive PDF Audit Exporter
 
