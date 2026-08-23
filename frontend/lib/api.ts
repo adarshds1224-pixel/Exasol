@@ -37,6 +37,31 @@ export interface DashboardData {
   monthly_prediction: MonthlyPredictionItem[]
 }
 
+export interface EvidenceSource {
+  source_name: string
+  type: string
+  origin: string
+  verified: boolean
+}
+
+export interface EvidenceResponse {
+  evidence_sources: EvidenceSource[]
+}
+
+export interface ImpactYearData {
+  received: number
+  disposed: number
+  resolution_rate: number
+}
+
+export interface ImpactTrackerData {
+  before_year: number
+  after_year: number
+  before: ImpactYearData
+  after: ImpactYearData
+  note: string
+}
+
 export interface Hypothesis {
   text: string
   confidence_pct: number
@@ -93,6 +118,22 @@ export async function getBlindSpots(): Promise<BlindSpotsResponse> {
     await parseError(response, 'Blind spots request')
   }
   return (await response.json()) as BlindSpotsResponse
+}
+
+export async function getEvidence(): Promise<EvidenceResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/evidence`)
+  if (!response.ok) {
+    await parseError(response, 'Evidence request')
+  }
+  return (await response.json()) as EvidenceResponse
+}
+
+export async function getImpactTracker(): Promise<ImpactTrackerData> {
+  const response = await fetch(`${API_BASE_URL}/api/impact-tracker`)
+  if (!response.ok) {
+    await parseError(response, 'Impact tracker request')
+  }
+  return (await response.json()) as ImpactTrackerData
 }
 
 export async function getInvestigation(department: string): Promise<Investigation> {

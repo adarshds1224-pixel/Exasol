@@ -43,12 +43,17 @@ def get_investigation_for_department(department: str):
 
     investigation = generate_investigation(match)
 
+    if "error" in investigation:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Investigation generation unavailable: {investigation['error']}",
+        )
+
     return {
         **match,
         "hypotheses": investigation.get("hypotheses", []),
         "evidence_gaps": investigation.get("evidence_gaps", []),
         "investigation_brief": investigation.get("investigation_brief", {}),
-        "error": investigation.get("error"),
     }
 
 

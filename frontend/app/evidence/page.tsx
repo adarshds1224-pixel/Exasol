@@ -1,3 +1,5 @@
+'use client'
+
 import { Evidence } from '@/components/evidence'
 
 export default function EvidencePage() {

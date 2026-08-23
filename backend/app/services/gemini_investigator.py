@@ -116,6 +116,13 @@ def generate_investigation(blind_spot: dict[str, Any]) -> dict[str, Any]:
         except Exception as exc:
             last_error = exc
             error_text = str(exc).lower()
+            if "401" in error_text or "unauthenticated" in error_text or "access_token_type_unsupported" in error_text:
+                return {
+                    "error": (
+                        "Gemini authentication failed. GEMINI_API_KEY must be a valid "
+                        "Google AI Studio API key, not an OAuth access token."
+                    )
+                }
             # If the model is unavailable, try the next candidate.
             if "not found" in error_text or "no longer available" in error_text or "404" in error_text:
                 continue
