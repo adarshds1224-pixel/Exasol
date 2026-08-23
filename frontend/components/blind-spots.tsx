@@ -2,23 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp, Users, ArrowRight, Loader2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, ArrowRight, Loader2 } from 'lucide-react'
 import {
   Card,
   SeverityBadge,
   IndicatorChip,
-  type Severity,
 } from '@/components/civic-ui'
-import { api } from '@/lib/api'
+import { getBlindSpots, type BlindSpot as ApiBlindSpot } from '@/lib/api'
 
 type BlindSpot = {
-  id: string
-  title: string
-  severity: Severity
-  evidenceStrength: string
-  affected: string
+  department: string
+  severity: 'HIGH' | 'MEDIUM' | 'LOW'
   indicators: { label: string; value: string; tone: 'up' | 'down' | 'neutral' }[]
-  explanation: string
   defaultExpanded: boolean
 }
 
@@ -31,11 +26,7 @@ function BlindSpotCard({ spot }: { spot: BlindSpot }) {
         <div className="flex items-start gap-3">
           <SeverityBadge severity={spot.severity} />
           <div>
-            <p className="font-semibold text-foreground">{spot.title}</p>
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Users className="size-3.5" />
-              Affected population: {spot.affected}
-            </p>
+            <p className="font-semibold text-foreground">{spot.department}</p>
           </div>
         </div>
         {expanded ? (
@@ -47,25 +38,13 @@ function BlindSpotCard({ spot }: { spot: BlindSpot }) {
 
       {expanded && (
         <div className="space-y-4 border-t border-border p-5">
-          <div className="flex flex-wrap items-center gap-4 text-sm">
-            <span className="text-muted-foreground">
-              Evidence Strength:{' '}
-              <span className="font-semibold text-foreground">{spot.evidenceStrength}</span>
-            </span>
-          </div>
-
           <div className="flex flex-wrap gap-2">
             {spot.indicators.map((ind) => (
               <IndicatorChip key={ind.label} label={ind.label} value={ind.value} tone={ind.tone as 'up' | 'down' | 'neutral'} />
             ))}
           </div>
 
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Potential explanation</p>
-            <p className="mt-1 text-sm text-foreground">{spot.explanation}</p>
-          </div>
-
-          <Link href="/investigations" className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+          <Link href={`/investigations?department=${encodeURIComponent(spot.department)}`} className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
             View Investigation
             <ArrowRight className="size-4" />
           </Link>
@@ -83,8 +62,21 @@ export function BlindSpots() {
   useEffect(() => {
     async function loadSpots() {
       try {
-        const data = await api.get<BlindSpot[]>('/api/blind-spots')
-        setSpots(data)
+        setLoading(true)
+        setError(null)
+        const response = await getBlindSpots()
+        setSpots(
+          response.blind_spots.map((spot: ApiBlindSpot) => ({
+            department: spot.department,
+            severity: spot.severity as 'HIGH' | 'MEDIUM' | 'LOW',
+            indicators: [
+              { label: 'Resolution rate', value: `${spot.resolution_rate}%`, tone: 'up' },
+              { label: 'Pending >3 years', value: `${spot.pending_gt_3yr}`, tone: 'down' },
+              { label: 'Pending >1 year', value: `${spot.pending_gt_1yr_pct}%`, tone: 'down' },
+            ],
+            defaultExpanded: spot.severity === 'HIGH',
+          })),
+        )
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load blind spots')
       } finally {
@@ -94,6 +86,30 @@ export function BlindSpots() {
 
     loadSpots()
   }, [])
+
+  function retryLoadSpots() {
+    setLoading(true)
+    setError(null)
+    getBlindSpots()
+      .then((response) => {
+        setSpots(
+          response.blind_spots.map((spot) => ({
+            department: spot.department,
+            severity: spot.severity as 'HIGH' | 'MEDIUM' | 'LOW',
+            indicators: [
+              { label: 'Resolution rate', value: `${spot.resolution_rate}%`, tone: 'up' },
+              { label: 'Pending >3 years', value: `${spot.pending_gt_3yr}`, tone: 'down' },
+              { label: 'Pending >1 year', value: `${spot.pending_gt_1yr_pct}%`, tone: 'down' },
+            ],
+            defaultExpanded: spot.severity === 'HIGH',
+          })),
+        )
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Unable to load blind spots')
+      })
+      .finally(() => setLoading(false))
+  }
 
   if (loading) {
     return (
@@ -109,6 +125,13 @@ export function BlindSpots() {
       <Card className="border-status-red/30 bg-status-red-bg">
         <p className="font-semibold text-status-red">Unable to load blind spots</p>
         <p className="mt-1 text-sm text-foreground">{error}</p>
+        <button
+          type="button"
+          onClick={retryLoadSpots}
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Retry
+        </button>
       </Card>
     )
   }
@@ -116,7 +139,7 @@ export function BlindSpots() {
   return (
     <div className="space-y-4">
       {spots.map((spot) => (
-        <BlindSpotCard key={spot.id} spot={spot} />
+        <BlindSpotCard key={spot.department} spot={spot} />
       ))}
     </div>
   )

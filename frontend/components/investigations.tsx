@@ -1,27 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Square, AlertTriangle, Check, Pencil, X, Loader2 } from 'lucide-react'
 import { Card, SectionTitle, SeverityBadge } from '@/components/civic-ui'
-import { api } from '@/lib/api'
-
-type InvestigationResponse = {
-  id: string
-  title: string
-  severity: 'HIGH' | 'MEDIUM' | 'LOW'
-  hypotheses: Array<{ label: string; confidence: number }>
-  evidenceGaps: string[]
-  brief: {
-    problem: string
-    observedContradiction: string
-    evidence: string
-    possibleHypotheses: string
-    uncertainty: string
-    affectedGroups: string
-    additionalEvidenceRequired: string
-    recommendedInvestigationSteps: string
-  }
-}
+import { getInvestigation, submitReview, type Investigation } from '@/lib/api'
 
 function ConfidenceBar({ value }: { value: number }) {
   return (
@@ -32,16 +15,24 @@ function ConfidenceBar({ value }: { value: number }) {
 }
 
 export function Investigations() {
-  const [investigation, setInvestigation] = useState<InvestigationResponse | null>(null)
+  const searchParams = useSearchParams()
+  const department = searchParams.get('department')
+  const [investigation, setInvestigation] = useState<Investigation | null>(null)
   const [decision, setDecision] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadInvestigation() {
+      if (!department) {
+        setLoading(false)
+        return
+      }
+
       try {
-        const data = await api.get<InvestigationResponse[]>('/api/investigations')
-        if (data.length > 0) setInvestigation(data[0])
+        setLoading(true)
+        setError(null)
+        setInvestigation(await getInvestigation(department))
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unable to load investigation')
       } finally {
@@ -50,16 +41,37 @@ export function Investigations() {
     }
 
     loadInvestigation()
-  }, [])
+  }, [department])
+
+  function retryLoadInvestigation() {
+    if (!department) return
+
+    setLoading(true)
+    setError(null)
+    getInvestigation(department)
+      .then(setInvestigation)
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Unable to load investigation')
+      })
+      .finally(() => setLoading(false))
+  }
 
   async function submitDecision(nextDecision: 'accept' | 'modify' | 'reject') {
-    if (!investigation) return
+    if (!department) return
     try {
-      const response = await api.post<{ decision: string }>(`/api/investigations/${investigation.id}/review`, { decision: nextDecision })
-      setDecision(response.decision)
+      const response = await submitReview(department, nextDecision)
+      setDecision(response.message)
     } catch (err) {
       setDecision(err instanceof Error ? err.message : 'Decision failed')
     }
+  }
+
+  if (!department) {
+    return (
+      <Card>
+        <p className="text-sm text-foreground">Select a blind spot from the Blind Spots page to view its investigation</p>
+      </Card>
+    )
   }
 
   if (loading) {
@@ -76,39 +88,46 @@ export function Investigations() {
       <Card className="border-status-red/30 bg-status-red-bg">
         <p className="font-semibold text-status-red">Investigation unavailable</p>
         <p className="mt-1 text-sm text-foreground">{error ?? 'No investigation data returned.'}</p>
+        <button
+          type="button"
+          onClick={retryLoadInvestigation}
+          className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Retry
+        </button>
       </Card>
     )
   }
 
   const briefFields = [
-    { label: 'Problem', value: investigation.brief.problem },
-    { label: 'Observed Contradiction', value: investigation.brief.observedContradiction },
-    { label: 'Evidence', value: investigation.brief.evidence },
-    { label: 'Possible Hypotheses', value: investigation.brief.possibleHypotheses },
-    { label: 'Uncertainty', value: investigation.brief.uncertainty },
-    { label: 'Affected Groups', value: investigation.brief.affectedGroups },
-    { label: 'Additional Evidence Required', value: investigation.brief.additionalEvidenceRequired },
-    { label: 'Recommended Investigation Steps', value: investigation.brief.recommendedInvestigationSteps },
+    { label: 'Problem', value: investigation.investigation_brief.problem },
+    { label: 'Observed Contradiction', value: investigation.investigation_brief.observed_contradiction },
+    { label: 'Evidence', value: investigation.investigation_brief.evidence },
+    { label: 'Hypotheses', value: investigation.hypotheses.map((hypothesis) => hypothesis.text).join(' ') },
+    { label: 'Uncertainty', value: investigation.investigation_brief.uncertainty },
+    { label: 'Affected Groups', value: investigation.investigation_brief.affected_groups },
+    { label: 'Additional Evidence Required', value: investigation.investigation_brief.additional_evidence_required },
+    { label: 'Recommended Investigation Steps', value: investigation.investigation_brief.recommended_steps },
   ]
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center gap-3">
         <SeverityBadge severity={investigation.severity} />
-        <h2 className="text-lg font-semibold text-foreground">{investigation.title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{investigation.department}</h2>
       </div>
 
       <Card className="space-y-4">
         <SectionTitle>Root-Cause Hypotheses</SectionTitle>
         <div className="space-y-4">
-          {investigation.hypotheses.map((h) => (
-            <div key={h.label} className="space-y-1.5">
+          {investigation.hypotheses.map((hypothesis, index) => (
+            <div key={`${hypothesis.label}-${index}`} className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-foreground">{h.label}</p>
-                <span className="text-sm font-semibold text-foreground">{h.confidence}%</span>
+                <p className="text-sm font-medium text-foreground">{hypothesis.text}</p>
+                <span className="text-sm font-semibold text-foreground">{hypothesis.confidence_pct}%</span>
               </div>
-              <ConfidenceBar value={h.confidence} />
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Hypothesis — Not Confirmed</p>
+              <ConfidenceBar value={hypothesis.confidence_pct} />
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{hypothesis.label}</p>
             </div>
           ))}
         </div>
@@ -118,7 +137,7 @@ export function Investigations() {
         <SectionTitle className="text-foreground">Insufficient evidence to determine root cause with certainty</SectionTitle>
         <p className="mt-2 text-sm font-medium text-muted-foreground">Additional evidence required:</p>
         <ul className="mt-3 space-y-2">
-          {investigation.evidenceGaps.map((item) => (
+          {investigation.evidence_gaps.map((item) => (
             <li key={item} className="flex items-center gap-2 text-sm text-foreground">
               <Square className="size-4 text-muted-foreground" />
               {item}

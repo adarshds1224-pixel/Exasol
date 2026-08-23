@@ -2,11 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import Settings
-from app.routes.blind_spots import router as blind_spots_router
-from app.routes.dashboard import router as dashboard_router
+from app.routers.blind_spots import router as blind_spots_router
+from app.routers.dashboard import router as dashboard_router
+from app.routers.investigations import router as investigations_router
 from app.routes.evidence import router as evidence_router
 from app.routes.impact import router as impact_router
-from app.routes.investigations import router as investigations_router
 from app.routes.reality_check import router as reality_check_router
 
 app = FastAPI(title=Settings.APP_NAME, version=Settings.APP_VERSION)

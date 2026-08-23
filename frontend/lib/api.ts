@@ -1,4 +1,128 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000'
+// TODO: move API_BASE_URL to an environment variable.
+export const API_BASE_URL = 'http://localhost:8000'
+
+export interface BlindSpot {
+  department: string
+  severity: 'HIGH' | 'MEDIUM' | 'LOW'
+  resolution_rate: number
+  pending_gt_3yr: number
+  pending_gt_1yr_pct: number
+  indicator_summary: string
+}
+
+export interface BlindSpotsResponse {
+  blind_spots: BlindSpot[]
+}
+
+export interface YearlyTrendItem {
+  year: number
+  received: number
+  disposed: number
+  resolution_rate: number
+}
+
+export interface MonthlyPredictionItem {
+  month: string
+  predicted: number
+  actual: number
+  pct_change: number
+}
+
+export interface DashboardData {
+  active_blind_spots: number
+  high_severity_count: number
+  cases_analyzed: number
+  top_blind_spots: BlindSpot[]
+  yearly_trend: YearlyTrendItem[]
+  monthly_prediction: MonthlyPredictionItem[]
+}
+
+export interface Hypothesis {
+  text: string
+  confidence_pct: number
+  label: string
+}
+
+export interface InvestigationBrief {
+  problem: string
+  observed_contradiction: string
+  evidence: string
+  uncertainty: string
+  affected_groups: string
+  additional_evidence_required: string
+  recommended_steps: string
+}
+
+export interface Investigation extends BlindSpot {
+  hypotheses: Hypothesis[]
+  evidence_gaps: string[]
+  investigation_brief: InvestigationBrief
+}
+
+export interface ReviewResponse {
+  department: string
+  action: 'accept' | 'modify' | 'reject'
+  status: string
+  message: string
+}
+
+async function parseError(response: Response, context: string): Promise<never> {
+  let detail = ''
+  try {
+    const data = await response.json()
+    detail = data?.detail ?? data?.message ?? ''
+  } catch {
+    detail = ''
+  }
+
+  const suffix = detail ? `: ${detail}` : ''
+  throw new Error(`${context} failed (${response.status} ${response.statusText})${suffix}`)
+}
+
+export async function getDashboard(): Promise<DashboardData> {
+  const response = await fetch(`${API_BASE_URL}/api/dashboard`)
+  if (!response.ok) {
+    await parseError(response, 'Dashboard request')
+  }
+  return (await response.json()) as DashboardData
+}
+
+export async function getBlindSpots(): Promise<BlindSpotsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/blind-spots`)
+  if (!response.ok) {
+    await parseError(response, 'Blind spots request')
+  }
+  return (await response.json()) as BlindSpotsResponse
+}
+
+export async function getInvestigation(department: string): Promise<Investigation> {
+  const encodedDepartment = encodeURIComponent(department)
+  const response = await fetch(`${API_BASE_URL}/api/investigations/${encodedDepartment}`)
+  if (!response.ok) {
+    await parseError(response, 'Investigation request')
+  }
+  return (await response.json()) as Investigation
+}
+
+export async function submitReview(
+  department: string,
+  action: 'accept' | 'modify' | 'reject',
+): Promise<ReviewResponse> {
+  const encodedDepartment = encodeURIComponent(department)
+  const response = await fetch(`${API_BASE_URL}/api/investigations/${encodedDepartment}/review`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ action }),
+  })
+
+  if (!response.ok) {
+    await parseError(response, 'Review submission')
+  }
+
+  return (await response.json()) as ReviewResponse
+}
 
 async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -10,14 +134,7 @@ async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T
   })
 
   if (!response.ok) {
-    let message = 'Request failed'
-    try {
-      const data = await response.json()
-      message = data?.detail ?? data?.message ?? message
-    } catch {
-      // ignore JSON parse errors and fall back to generic message
-    }
-    throw new Error(message)
+    await parseError(response, 'API request')
   }
 
   return (await response.json()) as T
