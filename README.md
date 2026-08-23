@@ -23,6 +23,7 @@ CivicSage is an AI-driven platform that analyzes large-scale public-service data
 - [Design Philosophy](#design-philosophy)
 - [Disclaimer](#disclaimer)
 - [Screenshots](#screenshots)
+- [Why CivicSage Matters](#why-civicsage-matters)
 
 ---
 
@@ -268,40 +269,51 @@ Example response:
 
 CivicSage is an **educational and hackathon prototype**. Datasets are synthetic and do not represent real government records, live systems, or actual citizen complaints. Risk scores are analytical indicators only, not definitive judgments about any department, region, or individual. AI-generated findings are meant to support human review and should always be validated against real evidence.
 
+## Screenshots
+
+### Exasol Deployed on AWS
+
+The team used Windows, with Exasol deployed on AWS.
+
+**IAM policy created:**
+
+<img width="1917" height="905" alt="IAM policy created" src="https://github.com/user-attachments/assets/063b5dab-7968-494e-8fcc-e4a9875fdf81" />
+
+**IAM user created:**
+
+<img width="1915" height="923" alt="IAM user created" src="https://github.com/user-attachments/assets/52e4034e-5223-428a-808c-96b6ae5817da" />
+
+**Exasol deployed on AWS:**
+
+<img width="1885" height="962" alt="Exasol deployed on AWS - 1" src="https://github.com/user-attachments/assets/123f9f0b-deb5-424b-96be-3c3baaa18161" />
+
+<img width="1895" height="967" alt="Exasol deployed on AWS - 2" src="https://github.com/user-attachments/assets/6a7f4c2d-326a-4bdd-8d11-a34067e2b110" />
+
+### Final Product
+
+<img width="1896" height="902" alt="CivicSage dashboard - 1" src="https://github.com/user-attachments/assets/1e9bc9c2-232d-4093-a631-48a79b504cc2" />
+
+<img width="1906" height="902" alt="CivicSage dashboard - 2" src="https://github.com/user-attachments/assets/cb849bac-5954-467c-9093-af3affce25a6" />
+
+<img width="1892" height="896" alt="CivicSage dashboard - 3" src="https://github.com/user-attachments/assets/a61401ff-a35c-4a95-bdbb-0866d43384b8" />
+
+<img width="1897" height="897" alt="CivicSage dashboard - 4" src="https://github.com/user-attachments/assets/ca036430-74ba-446b-b62a-7aaec60523c6" />
+
+<img width="1901" height="896" alt="CivicSage dashboard - 5" src="https://github.com/user-attachments/assets/d59d50d0-7ba7-4e44-ab06-6c07eb97b994" />
+
+<img width="1877" height="897" alt="CivicSage dashboard - 6" src="https://github.com/user-attachments/assets/4d6b19e3-b330-43c8-bfc2-3230f4fcccb1" />
+
+## Why CivicSage Matters
+
+CivicSage is built around a simple but important problem: a case marked "resolved" doesn't always mean the citizen's problem was actually solved.
+
+In real public-service systems, millions of cases are processed every year, making it hard for decision-makers to notice hidden patterns — growing backlogs, aging cases, repeated complaints, or regional disparities. CivicSage brings these signals together and highlights where the numbers may be hiding a deeper problem.
+
+The goal isn't to replace human decision-makers or judge public departments. It's to help them see what might otherwise be missed, investigate it with evidence, and act on better information.
+
+Ultimately, CivicSage aims to move public-service analytics from *"How many cases did we close?"* to *"Are we actually solving the problems people came to us with?"*
+
 ---
-##Screenshots
-
-***Since windows was used by the team, Exasol has been deployed on AWS:
-IAM POLICY IS CREATED:
-<img width="1917" height="905" alt="Screenshot 2026-08-24 002855" src="https://github.com/user-attachments/assets/063b5dab-7968-494e-8fcc-e4a9875fdf81" />
-
-IAM USER IS CREATED:
-<img width="1915" height="923" alt="Screenshot 2026-08-24 002811" src="https://github.com/user-attachments/assets/52e4034e-5223-428a-808c-96b6ae5817da" />
-
-Exasol deployed on AWS:
-<img width="1885" height="962" alt="Screenshot 2026-08-24 003144" src="https://github.com/user-attachments/assets/123f9f0b-deb5-424b-96be-3c3baaa18161" />
-<img width="1895" height="967" alt="Screenshot 2026-08-24 003005" src="https://github.com/user-attachments/assets/6a7f4c2d-326a-4bdd-8d11-a34067e2b110" />
-
-***Final product screenshots:
-<img width="1896" height="902" alt="Screenshot 2026-08-24 003345" src="https://github.com/user-attachments/assets/1e9bc9c2-232d-4093-a631-48a79b504cc2" />
-<img width="1906" height="902" alt="Screenshot 2026-08-24 003405" src="https://github.com/user-attachments/assets/cb849bac-5954-467c-9093-af3affce25a6" />
-<img width="1892" height="896" alt="Screenshot 2026-08-24 003432" src="https://github.com/user-attachments/assets/a61401ff-a35c-4a95-bdbb-0866d43384b8" />
-<img width="1897" height="897" alt="Screenshot 2026-08-24 003506" src="https://github.com/user-attachments/assets/ca036430-74ba-446b-b62a-7aaec60523c6" />
-<img width="1901" height="896" alt="Screenshot 2026-08-24 003526" src="https://github.com/user-attachments/assets/d59d50d0-7ba7-4e44-ab06-6c07eb97b994" />
-<img width="1877" height="897" alt="Screenshot 2026-08-24 003554" src="https://github.com/user-attachments/assets/4d6b19e3-b330-43c8-bfc2-3230f4fcccb1" />
-
-
-
------------------------------------------------
-Why CivicSage Matters
-
-CivicSage is built around a simple but important problem: a case being marked “resolved” does not always mean the citizen’s problem was actually solved.
-
-In real public-service systems, millions of cases are processed every year, making it difficult for decision-makers to notice hidden patterns such as growing backlogs, aging cases, repeated complaints, or regional disparities. CivicSage helps bring these signals together and highlight where the numbers may be hiding a deeper problem.
-
-The goal is not to replace human decision-makers or judge public departments. It is to help them see what might otherwise be missed, investigate it with evidence, and take better-informed action.
-
-Ultimately, CivicSage aims to move public-service analytics from “How many cases did we close?” to “Are we actually solving the problems people came to us with?”
 
 **Built with:** Exasol · AWS · FastAPI · Next.js · React · Python · SQL · AI
 
