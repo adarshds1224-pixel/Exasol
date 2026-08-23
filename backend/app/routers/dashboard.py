@@ -3,8 +3,7 @@ from pathlib import Path
 import pandas as pd
 from fastapi import APIRouter
 
-from app.services.blind_spot_detector import get_all_blind_spots, load_dept_data
-
+from app.services.blind_spot_detector import get_all_blind_spots
 
 router = APIRouter()
 
@@ -12,13 +11,17 @@ router = APIRouter()
 @router.get("/api/dashboard")
 def get_dashboard():
     blind_spots = get_all_blind_spots()
-    full_dept_df = load_dept_data()
 
     active_blind_spots = len(blind_spots)
-    high_severity_count = sum(1 for item in blind_spots if item.get("severity") == "HIGH")
-    cases_analyzed = len(full_dept_df)
+    high_severity_count = sum(
+        1 for item in blind_spots if item.get("severity") == "HIGH"
+    )
 
-    data_pipeline_clean_dir = Path(__file__).resolve().parents[2] / "data-pipeline" / "clean"
+    data_pipeline_clean_dir = (
+        Path(__file__).resolve().parents[2]
+        / "data-pipeline"
+        / "clean"
+    )
 
     yearly_path = data_pipeline_clean_dir / "national_yearly_trend.csv"
     monthly_path = data_pipeline_clean_dir / "monthly_prediction_vs_actual.csv"
@@ -26,13 +29,19 @@ def get_dashboard():
     yearly_df = pd.read_csv(yearly_path)
     monthly_df = pd.read_csv(monthly_path)
 
+    # Total cases analyzed across all years
+    cases_analyzed = int(yearly_df["received"].sum())
+
     yearly_trend = (
-        yearly_df[["year", "received", "disposed", "resolution_rate"]]
-        .to_dict(orient="records")
+        yearly_df[
+            ["year", "received", "disposed", "resolution_rate"]
+        ].to_dict(orient="records")
     )
+
     monthly_prediction = (
-        monthly_df[["month", "predicted", "actual", "pct_change"]]
-        .to_dict(orient="records")
+        monthly_df[
+            ["month", "predicted", "actual", "pct_change"]
+        ].to_dict(orient="records")
     )
 
     return {
